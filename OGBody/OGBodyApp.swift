@@ -11,7 +11,9 @@ import SwiftUI
 struct OGBodyApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {                // Neue Navigation API :contentReference[oaicite:5]{index=5}
+                HomeView()
+            }
         }
     }
 }
