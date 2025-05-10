@@ -28,8 +28,7 @@ class OnboardingViewModel: ObservableObject {
                                   goal: goal)
         isLoading = true
         do {
-        //    planText = try await OpenAIService.shared.generatePlan(for: profile)
-            planText = "Fehler:"
+            planText = try await OpenAIService.shared.generatePlan(for: profile)
         } catch {
             planText = "Fehler: \(error.localizedDescription)"
         }
