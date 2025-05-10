@@ -1,3 +1,10 @@
+//
+//  PlanView.swift
+//  OGBody
+//
+//  Created by Berkin Koray Bilgin on 09.05.25.
+//
+
 import SwiftUI
 
 struct PlanView: View {
