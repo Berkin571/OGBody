@@ -12,48 +12,72 @@ struct OnboardingView: View {
     @StateObject private var planVM = PlanViewModel()
 
     var body: some View {
-        Form {                                     // Form für Nutzerinput :contentReference[oaicite:6]{index=6}
-            Section("Körperdaten") {
-                TextField("Gewicht (kg)", text: $vm.weight).keyboardType(.decimalPad)
-                TextField("Größe (cm)", text: $vm.height).keyboardType(.decimalPad)
-                TextField("Alter", text: $vm.age).keyboardType(.numberPad)
-            }
-            Section("Geschlecht") {
-                Picker("Geschlecht", selection: $vm.gender) {
-                    ForEach(Gender.allCases, id: \.self) { Text($0.rawValue) }
+        ZStack {
+            Color("White").ignoresSafeArea()
+            Form {
+                Section(header: Text("Körperdaten").foregroundColor(Color("AccentDark"))) {
+                    TextField("Gewicht (kg)", text: $vm.weight)
+                        .keyboardType(.decimalPad)
+                    TextField("Größe (cm)", text: $vm.height)
+                        .keyboardType(.decimalPad)
+                    TextField("Alter", text: $vm.age)
+                        .keyboardType(.numberPad)
                 }
-                .pickerStyle(.navigationLink)
-            }
-            Section("Aktivität") {
-                Picker("Aktivitätslevel", selection: $vm.activityLevel) {
-                    ForEach(ActivityLevel.allCases, id: \.self) { Text($0.rawValue) }
+                Section(header: Text("Geschlecht").foregroundColor(Color("AccentDark"))) {
+                    Picker("Geschlecht", selection: $vm.gender) {
+                        ForEach(Gender.allCases, id: \.self) { g in
+                            Text(g.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.navigationLink)
-            }
-            Section("Ziel") {
-                Picker("Ziel", selection: $vm.goal) {
-                    ForEach(FitnessGoal.allCases, id: \.self) { Text($0.rawValue) }
+                Section(header: Text("Aktivitätslevel").foregroundColor(Color("AccentDark"))) {
+                    Picker("Aktivitätslevel", selection: $vm.activityLevel) {
+                        ForEach(ActivityLevel.allCases, id: \.self) { level in
+                            Text(level.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.navigationLink)
-            }
-            Section {
-                if vm.isLoading {
-                    ProgressView("Erzeuge Plan…")
-                } else {
-                    Button("Plan generieren") {
-                        Task { await vm.submit() }    // Async/Await Aufruf
+                Section(header: Text("Ziel").foregroundColor(Color("AccentDark"))) {
+                    Picker("Ziel", selection: $vm.goal) {
+                        ForEach(FitnessGoal.allCases, id: \.self) { goal in
+                            Text(goal.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                Section {
+                    if vm.isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                    } else {
+                        Button {
+                            Task { await vm.submit() }
+                        } label: {
+                            Text("Plan generieren")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color("PrimaryGreen"))
+                                .cornerRadius(10)
+                        }
                     }
                 }
             }
+            .background(Color.clear)
+            .scrollContentBackground(.hidden)
         }
         .navigationTitle("Deine Daten")
         .navigationDestination(isPresented:
             Binding(get: { vm.planText != nil }, set: { if !$0 { vm.planText = nil } })
-        ) {                                   // Dynamische Navigation :contentReference[oaicite:7]{index=7}
-            if let text = vm.planText {
-                PlanView(planVM: planVM)
-                    .onAppear { planVM.update(with: text) }
-            }
+        ) {
+            PlanView(planVM: planVM)
+                .onAppear { planVM.update(with: vm.planText ?? "") }
         }
     }
 }
