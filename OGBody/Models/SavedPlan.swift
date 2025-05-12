@@ -8,8 +8,9 @@
 import Foundation
 
 /// Ein einzelner gespeicherter Plan
-struct SavedPlan: Identifiable, Codable {
+struct SavedPlan: Identifiable, Codable, Hashable {
     let id: UUID
     let date: Date
     let text: String
+    var reminderDate: Date?
 }

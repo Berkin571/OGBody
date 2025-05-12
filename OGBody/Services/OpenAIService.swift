@@ -30,6 +30,8 @@ public final class OpenAIService {
         • Geschlecht: \(profile.gender.rawValue)
         • Aktivitätslevel: \(profile.activityLevel.rawValue)
         • Ziel: \(profile.goal.rawValue)
+        
+        Antworte immer in einem Format der mit Trainingsplan sowie mit Ernährungsplan anfängt. Der Trainingsplan soll stets in die Wochentage aufgeteilt sein. Der Ernährungsplan soll stets in die Frühstück, Snack, Mittagessen, Snack, Abendessen sowie Snack vor dem Schlafengehen aufgeteilt sein.
         """
 
         // 2) URLRequest konfigurieren

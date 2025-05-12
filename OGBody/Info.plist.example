@@ -22,6 +22,9 @@
 	<key>CFBundleShortVersionString</key>
   	<string>1.0</string>
 
+	<key>NSRemindersUsageDescription</key>
+	<string>Die App benötigt Zugriff auf Erinnerungen, um automatische Workout-Erinnerungen anzulegen.</string>
+
 	-
     keys
     -

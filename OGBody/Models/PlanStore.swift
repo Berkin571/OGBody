@@ -24,7 +24,8 @@ final class PlanStore: ObservableObject {
         let new = SavedPlan(
             id: UUID(),
             date: Date(),
-            text: text
+            text: text,
+            reminderDate: nil
         )
         plans.insert(new, at: 0)
         save()
@@ -47,4 +48,11 @@ final class PlanStore: ObservableObject {
         guard let data = try? JSONEncoder().encode(plans) else { return }
         UserDefaults.standard.set(data, forKey: key)
     }
+
+    func setReminderDate(_ date: Date, for planID: UUID) {
+        guard let idx = plans.firstIndex(where: { $0.id == planID }) else { return }
+        plans[idx].reminderDate = date
+        save()
+    }
+
 }

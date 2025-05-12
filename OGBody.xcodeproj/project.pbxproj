@@ -14,17 +14,29 @@
 		D9B222A62DCEBBD500887A4B /* Exceptions for "OGBody" folder in "OGBody" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Helper/Date+Extensions.swift",
 				Info.plist,
 			);
 			target = D9B222712DCEAFAB00887A4B /* OGBody */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		D9D979A72DD295E500E619BA /* Exceptions for "OGBody" folder in "Copy Bundle Resources" phase from "OGBody" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = D9B222702DCEAFAB00887A4B /* Resources */;
+			membershipExceptions = (
+				"Helper/Date+Extensions.swift",
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D9B222742DCEAFAB00887A4B /* OGBody */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				D9B222A62DCEBBD500887A4B /* Exceptions for "OGBody" folder in "OGBody" target */,
+				D9D979A72DD295E500E619BA /* Exceptions for "OGBody" folder in "Copy Bundle Resources" phase from "OGBody" target */,
 			);
 			path = OGBody;
 			sourceTree = "<group>";
