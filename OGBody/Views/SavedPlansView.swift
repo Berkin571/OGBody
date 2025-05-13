@@ -35,7 +35,7 @@ struct SavedPlansView: View {
                                             .font(.caption)
                                             .foregroundColor(.secondary)
 
-                                        Text(plan.text)
+                                        Text(plan.text.removingStars())
                                             .font(.body)
                                             .foregroundColor(.primary)
                                             .lineLimit(2)

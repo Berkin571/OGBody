@@ -98,10 +98,3 @@ struct PlanDetailView: View {
         }
     }
 }
-
-extension String {
-  /// Entfernt alle Sternchen (*) aus dem String
-  func removingStars() -> String {
-    self.replacingOccurrences(of: "*", with: "")
-  }
-}

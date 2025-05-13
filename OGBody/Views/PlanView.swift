@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-/// Ein Trainings-Tag mit Liste von Übungen/Cardio
+/// Trainings-Tag mit Übungen
 struct TrainingDay: Identifiable {
     let id = UUID()
     let name: String
     var items: [String]
 }
 
-/// Eine Mahlzeit mit Liste von Gerichten/Snacks
+/// Ernährungs-Sektion mit Mahlzeiten
 struct MealSection: Identifiable {
     let id = UUID()
     let name: String
@@ -51,9 +51,10 @@ struct PlanView: View {
                             .shadow(radius: 4)
                             .frame(minHeight: 300)
                             .onChange(of: draftPlan) { _ in parsePlan() }
+
                     } else {
                         VStack(alignment: .leading, spacing: 32) {
-                            // Trainingsplan
+                            // MARK: Trainingsplan
                             VStack(alignment: .leading, spacing: 16) {
                                 Text("🏋️ Trainingsplan")
                                     .font(.title2).bold()
@@ -61,9 +62,11 @@ struct PlanView: View {
 
                                 ForEach(trainingDays) { day in
                                     VStack(alignment: .leading, spacing: 8) {
+                                        // name ist bereits ohne Sterne
                                         Text(day.name)
                                             .font(.headline)
                                             .foregroundColor(Color("PrimaryGreen"))
+                                        // items sind ebenfalls ohne Sterne
                                         ForEach(day.items, id: \.self) { item in
                                             Text("• \(item)")
                                                 .foregroundColor(.primary)
@@ -72,7 +75,7 @@ struct PlanView: View {
                                 }
                             }
 
-                            // Ernährungsplan
+                            // MARK: Ernährungsplan
                             VStack(alignment: .leading, spacing: 16) {
                                 Text("🥗 Ernährungsplan")
                                     .font(.title2).bold()
@@ -97,15 +100,22 @@ struct PlanView: View {
                         .shadow(radius: 4)
                     }
 
-                    // Buttons
+                    // MARK: Buttons
                     HStack {
                         Button(isEditing ? "Fertig" : "Bearbeiten") {
                             withAnimation {
-                                if !isEditing { parsePlan() }
+                                if isEditing {
+                                    // Wenn ich aus dem Edit-Modus rausgehe: parsePlan aufrufen
+                                    parsePlan()
+                                } else {
+                                    // Wenn ich in den Edit-Modus gehe: Sterne aus draftPlan entfernen
+                                    draftPlan = draftPlan.removingStars()
+                                }
                                 isEditing.toggle()
                             }
                         }
-                        .padding(.horizontal, 16).padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                         .background(Color("PrimaryGreen").opacity(0.2))
                         .foregroundColor(Color("PrimaryGreen"))
                         .cornerRadius(8)
@@ -118,7 +128,8 @@ struct PlanView: View {
                                 presentationMode.wrappedValue.dismiss()
                             } label: {
                                 Label("Speichern", systemImage: "bookmark.fill")
-                                    .padding(.horizontal, 16).padding(.vertical, 8)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
                                     .background(Color("PrimaryGreen"))
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
@@ -133,66 +144,67 @@ struct PlanView: View {
         .onAppear { parsePlan() }
     }
 
-    /// Parst den Rohtext in TrainingsDays und MealSections,
-    /// erkennt jetzt auch nummerierte Listen (1., 2., …)
+    /// Parst den Rohtext in Trainings- und Ernährungs-Sektionen
     private func parsePlan() {
         trainingDays = []
         meals = []
 
-        enum State { case none, training, nutrition }
-        var state: State = .none
+        enum Section { case none, training, nutrition }
+        var currentSection: Section = .none
 
-        for rawLine in draftPlan.components(separatedBy: .newlines) {
-            let line = rawLine.trimmingCharacters(in: .whitespaces)
-            if line.isEmpty { continue }
+        for raw in draftPlan.components(separatedBy: .newlines) {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty else { continue }
 
             // Abschnittswechsel
             if line.contains("Trainingsplan") {
-                state = .training
+                currentSection = .training
                 continue
             }
             if line.contains("Ernährungsplan") {
-                state = .nutrition
+                currentSection = .nutrition
                 continue
             }
 
-            switch state {
+            switch currentSection {
             case .training:
                 if line.hasPrefix("**") && line.hasSuffix("**") {
-                    // Neuer Tag, z.B. **Montag (Beine und Po):**
-                    let name = line.trimmingCharacters(in: CharacterSet(charactersIn: "*"))
-                    trainingDays.append(TrainingDay(name: name, items: []))
-                } else {
-                    // Bullet ( - … ) oder nummerierte Liste (1. …)
-                    guard !trainingDays.isEmpty else { break }
-                    let itemText: String
-                    if line.hasPrefix("-") {
-                        itemText = String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
-                    } else if let match = line.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-                        itemText = String(line[match.upperBound...]).trimmingCharacters(in: .whitespaces)
-                    } else {
-                        // Sonstige Zeilen einfach als Punkt übernehmen
-                        itemText = line
+                    // Neuer Tag
+                    let cleanName = line
+                        .trimmingCharacters(in: CharacterSet(charactersIn: "*"))
+                        .removingStars()
+                    trainingDays.append(TrainingDay(name: cleanName, items: []))
+                } else if let last = trainingDays.last,
+                          (line.hasPrefix("-") || line.range(of: #"^\d+\.\s"#, options: .regularExpression) != nil)
+                {
+                    // Liste an bestehender Sektion ergänzen
+                    var text = line
+                    if text.hasPrefix("-") { text = String(text.dropFirst()) }
+                    else if let r = text.range(of: #"^\d+\.\s"#, options: .regularExpression) {
+                        text = String(text[r.upperBound...])
                     }
-                    trainingDays[trainingDays.count - 1].items.append(itemText)
+                    let itemClean = text.trimmingCharacters(in: .whitespaces)
+                        .removingStars()
+                    trainingDays[trainingDays.count - 1].items.append(itemClean)
                 }
 
             case .nutrition:
                 if line.hasPrefix("**") && line.hasSuffix("**") {
-                    // Neue Mahlzeit, z.B. **Frühstück:**
-                    let name = line.trimmingCharacters(in: CharacterSet(charactersIn: "*"))
-                    meals.append(MealSection(name: name, items: []))
-                } else {
-                    guard !meals.isEmpty else { break }
-                    let itemText: String
-                    if line.hasPrefix("-") {
-                        itemText = String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
-                    } else if let match = line.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-                        itemText = String(line[match.upperBound...]).trimmingCharacters(in: .whitespaces)
-                    } else {
-                        itemText = line
+                    let cleanName = line
+                        .trimmingCharacters(in: CharacterSet(charactersIn: "*"))
+                        .removingStars()
+                    meals.append(MealSection(name: cleanName, items: []))
+                } else if let _ = meals.last,
+                          (line.hasPrefix("-") || line.range(of: #"^\d+\.\s"#, options: .regularExpression) != nil)
+                {
+                    var text = line
+                    if text.hasPrefix("-") { text = String(text.dropFirst()) }
+                    else if let r = text.range(of: #"^\d+\.\s"#, options: .regularExpression) {
+                        text = String(text[r.upperBound...])
                     }
-                    meals[meals.count - 1].items.append(itemText)
+                    let itemClean = text.trimmingCharacters(in: .whitespaces)
+                        .removingStars()
+                    meals[meals.count - 1].items.append(itemClean)
                 }
 
             case .none:
