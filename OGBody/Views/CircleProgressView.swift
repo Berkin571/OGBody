@@ -8,46 +8,45 @@
 import SwiftUI
 
 struct CircleProgressView: View {
-    let value: Double       // aktueller Messwert
-    let total: Double       // Ziel bzw. Maximalwert
-    let ringColor: Color    // Farbe des Fortschritts
-    let iconName: String    // SF Symbol im Ring
-    let title: String       // Beschriftung unter dem Ring
-    let unit: String        // Einheit des Werts
+    let value: Double
+    let total: Double
+    let ringColor: Color
+    let iconName: String
+    let unit: String
 
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
-                // Hintergrund-Ring
                 Circle()
-                    .stroke(lineWidth: 16)
+                    .stroke(lineWidth: 12)
                     .opacity(0.2)
                     .foregroundColor(ringColor)
 
-                // Fortschritts-Ring
                 Circle()
                     .trim(from: 0, to: CGFloat(min(value / total, 1.0)))
-                    .stroke(style: StrokeStyle(lineWidth: 16, lineCap: .round))
+                    .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round))
                     .foregroundColor(ringColor)
                     .rotationEffect(.degrees(-90))
 
-                // Icon in der Mitte
                 Image(systemName: iconName)
-                    .font(.title)
+                    .font(.title2)
                     .foregroundColor(ringColor.opacity(0.8))
             }
-            .frame(width: 120, height: 120)
-
-            // Wert + Einheit
-            Text("\(Int(value)) \(unit)")
+            .frame(width: 100, height: 100)
+            
+            Text(displayValue())
                 .font(.headline)
-                .foregroundColor(.primary)
-                
-
-            // Titel
-            Text(title)
+            + Text(" \(unit)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+        }
+    }
+
+    private func displayValue() -> String {
+        if unit == "km" {
+            return String(format: "%.2f", value)
+        } else {
+            return "\(Int(value))"
         }
     }
 }

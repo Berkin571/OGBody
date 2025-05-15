@@ -1,8 +1,8 @@
 //
-//  HealthService.swift
+//  HealthStore.swift
 //  OGBody
 //
-//  Created by Berkin Koray Bilgin on 13.05.25.
+//  Created by You on 16.05.25.
 //
 
 import Foundation
@@ -15,65 +15,78 @@ final class HealthStore: ObservableObject {
     @Published var stepCount: Double = 0
     @Published var activeCalories: Double = 0
     @Published var heartRate: Double = 0
+    @Published var distance: Double = 0   
 
     private init() {}
 
-    /// Legt fest, welche Datentypen wir lesen wollen
     private var readTypes: Set<HKObjectType> {
-        [
+        var set: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKObjectType.quantityType(forIdentifier: .heartRate)!
+            HKObjectType.quantityType(forIdentifier: .heartRate)!,
+            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
         ]
+        return set
     }
 
-    /// Fordert HealthKit-Berechtigung an
     func requestAuthorization() {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         store.requestAuthorization(toShare: [], read: readTypes) { ok, error in
-            if ok {
-                self.loadTodayData()
-            } else {
-                print("HealthKit Authorization failed: \(error?.localizedDescription ?? "")")
-            }
+            if ok { self.loadTodayData() }
+            else  { print("HealthKit Authorization failed:", error?.localizedDescription ?? "") }
         }
     }
 
-    /// Lädt alle Werte für heute
-    func loadTodayData() {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: Date())
+    private func loadTodayData() {
+        let cal       = Calendar.current
+        let startOfDay = cal.startOfDay(for: Date())
         let predicate = HKQuery.predicateForSamples(
             withStart: startOfDay,
             end: Date(),
             options: .strictStartDate
         )
 
-        // Schrittzahl
-        let stepsType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
-        let stepsQuery = HKStatisticsQuery(
-            quantityType: stepsType,
-            quantitySamplePredicate: predicate,
-            options: .cumulativeSum
-        ) { _, result, _ in
-            DispatchQueue.main.async {
-                self.stepCount = result?.sumQuantity()?.doubleValue(for: .count()) ?? 0
+        // Helper:
+        func runStatsQuery(for identifier: HKQuantityTypeIdentifier,
+                           unit: HKUnit,
+                           options: HKStatisticsOptions,
+                           assign: @escaping (Double) -> Void)
+        {
+            let type = HKQuantityType.quantityType(forIdentifier: identifier)!
+            let q    = HKStatisticsQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: options
+            ) { _, result, _ in
+                let val = result?
+                    .sumQuantity()?
+                    .doubleValue(for: unit)
+                    ?? 0
+                DispatchQueue.main.async { assign(val) }
             }
+            store.execute(q)
         }
-        store.execute(stepsQuery)
+
+        // Schritte
+        runStatsQuery(
+            for: .stepCount,
+            unit: .count(),
+            options: .cumulativeSum
+        ) { self.stepCount = $0 }
 
         // Aktive Kalorien
-        let calType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
-        let calQuery = HKStatisticsQuery(
-            quantityType: calType,
-            quantitySamplePredicate: predicate,
+        runStatsQuery(
+            for: .activeEnergyBurned,
+            unit: .kilocalorie(),
             options: .cumulativeSum
-        ) { _, result, _ in
-            DispatchQueue.main.async {
-                self.activeCalories = result?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0
-            }
-        }
-        store.execute(calQuery)
+        ) { self.activeCalories = $0 }
+
+        // Distanz (Walking + Running)
+        runStatsQuery(
+            for: .distanceWalkingRunning,
+            unit: HKUnit.meter(),
+            options: .cumulativeSum
+        ) { self.distance = $0 }
 
         // Herzfrequenz (Durchschnitt)
         let hrType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
@@ -82,10 +95,11 @@ final class HealthStore: ObservableObject {
             quantitySamplePredicate: predicate,
             options: .discreteAverage
         ) { _, result, _ in
-            DispatchQueue.main.async {
-                // Herzfrequenz in Schläge pro Minute
-                self.heartRate = result?.averageQuantity()?.doubleValue(for: HKUnit(from: "count/min")) ?? 0
-            }
+            let bpm = result?
+                .averageQuantity()?
+                .doubleValue(for: HKUnit(from: "count/min"))
+                ?? 0
+            DispatchQueue.main.async { self.heartRate = bpm }
         }
         store.execute(hrQuery)
     }
