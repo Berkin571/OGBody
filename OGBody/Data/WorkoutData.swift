@@ -10,8 +10,8 @@ import Foundation
 struct WorkoutData {
     static let all: [Workout] = [
         Workout(
-            title: "Ganzkörper-Kickstart",
-            subtitle: "30 Min, Anfänger",
+            title: "Ganzkörper",
+            subtitle: "30 Minuten",
             imageName: "workout_fullbody",
             instructions: """
 1. Aufwärmen (5 Min): leichtes Cardio  
@@ -23,8 +23,8 @@ struct WorkoutData {
 """
         ),
         Workout(
-            title: "Cardio-Blitz",
-            subtitle: "20 Min, Fortgeschritten",
+            title: "Cardio",
+            subtitle: "20 Minuten",
             imageName: "workout_cardio",
             instructions: """
 1. High Knees: 1 Min  
@@ -35,8 +35,8 @@ struct WorkoutData {
 """
         ),
         Workout(
-            title: "Kern & Rumpf",
-            subtitle: "15 Min, Mittelstufe",
+            title: "Rückentraining",
+            subtitle: "15 Minuten",
             imageName: "workout_core",
             instructions: """
 1. Sit-Ups: 3×15  

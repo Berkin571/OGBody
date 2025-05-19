@@ -84,7 +84,6 @@ struct WorkoutView: View {
                     Spacer(minLength: 40)
                 }
                 .padding(.vertical)
-                // ScrollOffset messen, um den NavTitle erst beim Scrollen einzublenden
                 .background(
                     GeometryReader { proxy in
                         Color.clear
