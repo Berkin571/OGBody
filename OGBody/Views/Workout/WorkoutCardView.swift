@@ -2,7 +2,7 @@
 //  WorkoutCardView.swift
 //  OGBody
 //
-//  Created by Berkin Koray Bilgin on 19.05.25.
+//  Created by You on 19.05.25.
 //
 
 import SwiftUI
@@ -15,18 +15,19 @@ struct WorkoutCardView: View {
             Image(workout.imageName)
                 .resizable()
                 .scaledToFill()
-                .frame(height: 180)
-                .clipped()
+                .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
+                .clipped()                              
                 .cornerRadius(16)
 
-            // Overlay-Gradient für Lesbarkeit
+            // Overlay-Gradient
             LinearGradient(
-                gradient: Gradient(colors: [.black.opacity(0.0), .black.opacity(0.6)]),
+                gradient: Gradient(colors: [Color.black.opacity(0), Color.black.opacity(0.6)]),
                 startPoint: .top,
                 endPoint: .bottom
             )
             .cornerRadius(16)
 
+            // Text oben drauf
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.title)
                     .font(.headline)
@@ -37,6 +38,7 @@ struct WorkoutCardView: View {
             }
             .padding()
         }
+        .frame(maxWidth: .infinity)        // nimmt eine halbe Bildschirmbreite im Grid ein
         .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 4)
     }
 }

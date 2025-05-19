@@ -18,7 +18,6 @@ private struct ScrollOffsetKey: PreferenceKey {
 struct WorkoutView: View {
     private let workouts = WorkoutData.all
     
-    // 1× definieren und dann in beiden Grids verwenden
     private let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
@@ -40,7 +39,6 @@ struct WorkoutView: View {
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
                     
-                    // ─── Erste Grid-Reihe: Workout-Cards ───
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(workouts) { workout in
                             NavigationLink {
@@ -52,7 +50,6 @@ struct WorkoutView: View {
                     }
                     .padding(.horizontal)
                     
-                    // ─── Zweite Grid-Reihe: KI-Plan-Card ───
                     LazyVGrid(columns: columns, spacing: 16) {
                         NavigationLink {
                             OnboardingView()
