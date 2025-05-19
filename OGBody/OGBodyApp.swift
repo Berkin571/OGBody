@@ -1,17 +1,22 @@
-//
-//  OGBodyApp.swift
-//  OGBody
-//
-//  Created by Berkin Koray Bilgin on 09.05.25.
-//
-
 import SwiftUI
 
 @main
 struct OGBodyApp: App {
     var body: some Scene {
-        WindowGroup {
-            TabBarView()
-        }
+        WindowGroup(content: {
+            // Ein einziger NavigationStack für die gesamte App
+            NavigationStack {
+                CustomTabBarView { tab in
+                    switch tab {
+                    case .home:
+                        HomeView()
+                    case .workout:
+                        WorkoutView()
+                    case .coach:
+                        AIFitnessCoachView()
+                    }
+                }
+            }
+        })
     }
 }

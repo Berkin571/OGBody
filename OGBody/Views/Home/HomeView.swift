@@ -10,7 +10,7 @@ import SwiftUI
 struct HomeView: View {
     var body: some View {
         ZStack {
-            Color("White").ignoresSafeArea()
+            Color.white.ignoresSafeArea()
             VStack(spacing: 40) {
                 Text("OG Body")
                     .font(.system(size: 48, weight: .heavy))
