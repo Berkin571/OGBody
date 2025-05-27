@@ -32,5 +32,9 @@ struct AIFitnessCoachView: View {
         }
         .padding()
         .navigationTitle("AI Coach")
+        .frame(maxWidth: .infinity,
+               maxHeight: .infinity,
+               alignment: .top)
+
     }
 }
