@@ -20,7 +20,7 @@ public final class OpenAIService {
     /// Generiert einen Wochen-Trainings- und Ernährungsplan per Chat-Endpoint
     /// - Parameter profile: Die Nutzerdaten
     /// - Returns: Den generierten Plan als String
-    func generatePlan(for profile: UserProfile) async throws -> String {
+    func generatePlan(for profile: ExtendedUserProfile) async throws -> String {
         // 1) Prompt zusammenbauen
         let prompt = """
         Erstelle einen realistischen, anfänger-gerechten Wochen-Trainings- und Ernährungsplan basierend auf:

@@ -2,101 +2,80 @@
 //  OnboardingView.swift
 //  OGBody
 //
-//  Created by You on 12.05.25.
-//
 
 import SwiftUI
 
 struct OnboardingView: View {
+    
+    enum Step: Int, CaseIterable {
+        case body, lifestyle, diet, training, summary
+    }
+    
+    // MARK: – State
     @StateObject private var vm = OnboardingViewModel()
+    @State private var step: Step = .body
     @State private var showPlanSheet = false
-    @State private var planToShow = ""
-
+    
+    // MARK: – View
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.white.ignoresSafeArea()
-
-                Form {
-                    Section(header: Text("Körperdaten")
-                                .foregroundColor(Color("AccentDark"))) {
-                        TextField("Gewicht (kg)", text: $vm.weight)
-                            .keyboardType(.decimalPad)
-                        TextField("Größe (cm)", text:  $vm.height)
-                            .keyboardType(.decimalPad)
-                        TextField("Alter", text:    $vm.age)
-                            .keyboardType(.numberPad)
-                    }
-                    Section(header: Text("Geschlecht")
-                                .foregroundColor(Color("AccentDark"))) {
-                        Picker("Geschlecht", selection: $vm.gender) {
-                            ForEach(Gender.allCases, id: \.self) {
-                                Text($0.rawValue)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    Section(header: Text("Aktivitätslevel")
-                                .foregroundColor(Color("AccentDark"))) {
-                        Picker("Aktivitätslevel", selection: $vm.activityLevel) {
-                            ForEach(ActivityLevel.allCases, id: \.self) {
-                                Text($0.rawValue)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    Section(header: Text("Ziel")
-                                .foregroundColor(Color("AccentDark"))) {
-                        Picker("Ziel", selection: $vm.goal) {
-                            ForEach(FitnessGoal.allCases, id: \.self) {
-                                Text($0.rawValue)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-
-                    Section {
-                        if vm.isLoading {
-                            HStack {
-                                Spacer()
-                                ProgressView("Erzeuge Plan…")
-                                Spacer()
-                            }
-                        } else {
-                            Button {
-                                Task {
-                                    await vm.submit()
-                                    // Nur wenn wir wirklich einen non-empty Plan haben:
-                                    if let text = vm.planText?
-                                        .trimmingCharacters(in: .whitespacesAndNewlines),
-                                       !text.isEmpty
-                                    {
-                                        planToShow = text
-                                        showPlanSheet = true
-                                    }
-                                }
-                            } label: {
-                                Text("Plan generieren")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color("PrimaryGreen"))
-                                    .cornerRadius(10)
-                            }
-                        }
+            VStack(spacing: 24) {
+                
+                // Progress-Indicator -------------------------------------------------
+                ProgressView(value: Double(step.rawValue),
+                             total: Double(Step.allCases.count - 1))
+                    .tint(Color("PrimaryGreen"))
+                    .padding(.horizontal)
+                
+                // Step-Content -------------------------------------------------------
+                Group {
+                    switch step {
+                    case .body:      BodyStepView(vm: vm)
+                    case .lifestyle: LifestyleStepView(vm: vm)
+                    case .diet:      DietStepView(vm: vm)
+                    case .training:  TrainingStepView(vm: vm)
+                    case .summary:   SummaryStepView(vm: vm)
                     }
                 }
-                .background(Color.clear)
-                .scrollContentBackground(.hidden)
+                .transition(.slide)
+                .animation(.easeInOut, value: step)
+                
+                // Button-Leiste ------------------------------------------------------
+                HStack {
+                    if step != .body {
+                        Button("Zurück") { withAnimation { prev() } }
+                            .foregroundColor(Color("AccentDark"))
+                    }
+                    Spacer()
+                    Button(step == .summary ? "Plan generieren" : "Weiter") {
+                        Task { await nextOrSubmit() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color("PrimaryGreen"))
+                    .disabled(!vm.isStepValid(step))
+                }
+                .padding(.horizontal)
             }
-            .navigationTitle("Deine Daten")
-            // Sheet öffnet PlanView – kein Optional-Unwrapping in NavigationLink nötig
+            .padding()
+            .navigationTitle("Schritt \(step.rawValue + 1) / \(Step.allCases.count)")
             .sheet(isPresented: $showPlanSheet) {
                 NavigationStack {
-                    PlanView(fullPlan: planToShow)
+                    PlanView(fullPlan: vm.planText ?? "")
                 }
             }
         }
+    }
+    
+    // MARK: – Flow-Helpers
+    private func nextOrSubmit() async {
+        if step == .summary {
+            await vm.submit()
+            if vm.planText?.isEmpty == false { showPlanSheet = true }
+        } else {
+            withAnimation { step = Step(rawValue: step.rawValue + 1)! }
+        }
+    }
+    private func prev() {
+        step = Step(rawValue: step.rawValue - 1)!
     }
 }
