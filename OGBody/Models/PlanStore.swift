@@ -2,35 +2,28 @@
 //  PlanStore.swift
 //  OGBody
 //
-//  Created by Berkin Koray Bilgin on 11.05.25.
-//
 
 import Foundation
-import Combine   // ← für ObservableObject & @Published
+import Combine
 
-/// Singleton-Store, der SavedPlan-Objekte in UserDefaults hält
 final class PlanStore: ObservableObject {
     static let shared = PlanStore()
-
+    
     @Published private(set) var plans: [SavedPlan] = []
-
     private let key = "SAVED_PLANS"
-
-    private init() {
-        load()
-    }
-
+    
+    private init() { load() }
+    
     func add(_ text: String) {
-        let new = SavedPlan(
-            id: UUID(),
-            date: Date(),
-            text: text,
-            reminderDate: nil
-        )
+        let new = SavedPlan(id: UUID(), date: Date(), text: text, reminderDate: nil)
         plans.insert(new, at: 0)
         save()
+        
+        // 🆕  Trainings-Tage parsen & in Firestore speichern
+        let days = PlanParser.trainingDays(from: text)
+        Task { try? await WorkoutRepository.shared.save(days) }
     }
-
+    
     func delete(at offsets: IndexSet) {
         plans.remove(atOffsets: offsets)
         save()
@@ -54,5 +47,5 @@ final class PlanStore: ObservableObject {
         plans[idx].reminderDate = date
         save()
     }
-
 }
+

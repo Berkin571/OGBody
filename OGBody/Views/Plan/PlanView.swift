@@ -7,13 +7,6 @@
 
 import SwiftUI
 
-/// Trainings-Tag mit Übungen
-struct TrainingDay: Identifiable {
-    let id = UUID()
-    let name: String
-    var items: [String]
-}
-
 /// Ernährungs-Sektion mit Mahlzeiten
 struct MealSection: Identifiable {
     let id = UUID()
