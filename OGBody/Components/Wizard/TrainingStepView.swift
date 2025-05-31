@@ -11,22 +11,23 @@ import SwiftUI
 struct TrainingStepView: View {
     @ObservedObject var vm: OnboardingViewModel
     var body: some View {
-        Form {
-            Section("Trainingstage pro Woche") {
-                Stepper(value: $vm.daysPerWeek, in: 1...7) {
-                    Text("\(vm.daysPerWeek) Tag(e)")
-                }
+        VStack(spacing: 20) {
+            Stepper(value: $vm.daysPerWeek, in: 1...7) {
+                Text("Trainingstage: \(vm.daysPerWeek) / Woche")
             }
-            Section("Dauer je Einheit") {
-                Picker("Dauer", selection: $vm.sessionDuration) {
-                    ForEach(SessionDuration.allCases, id: \.self) { Text($0.label) }
-                }.pickerStyle(.segmented)
+            .padding(.vertical, 6)
+            
+            Picker("Dauer je Einheit", selection: $vm.sessionDuration) {
+                ForEach(SessionDuration.allCases, id: \.self) { Text($0.label) }
             }
-            Section("Equipment") {
-                Picker("Verfügbar", selection: $vm.equipment) {
-                    ForEach(EquipmentLevel.allCases, id: \.self) { Text($0.rawValue) }
-                }.pickerStyle(.inline)
+            .pickerStyle(.segmented)
+            
+            Picker("Equipment", selection: $vm.equipment) {
+                ForEach(EquipmentLevel.allCases, id: \.self) { Text($0.rawValue) }
             }
-        }.scrollContentBackground(.hidden)
+            .pickerStyle(.inline)
+            .padding(.vertical, 6)
+        }
+        .padding()
     }
 }

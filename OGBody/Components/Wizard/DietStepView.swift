@@ -11,17 +11,17 @@ import SwiftUI
 struct DietStepView: View {
     @ObservedObject var vm: OnboardingViewModel
     var body: some View {
-        Form {
-            Section("Präferenz") {
-                Picker("Ernährungsform", selection: $vm.diet) {
-                    ForEach(DietPreference.allCases, id: \.self) { Text($0.rawValue) }
-                }
-                .pickerStyle(.inline)
+        VStack(spacing: 20) {
+            Picker("Ernährungsform", selection: $vm.diet) {
+                ForEach(DietPreference.allCases, id: \.self) { Text($0.rawValue) }
             }
-            Section("Allergien") {
-                TextField("Allergien / Unverträglichkeiten (optional)",
-                          text: $vm.allergies)
-            }
-        }.scrollContentBackground(.hidden)
+            .pickerStyle(.inline)
+            .padding(.vertical, 6)
+            
+            TextField("Allergien / Unverträglichkeiten (optional)",
+                      text: $vm.allergies)
+            .cardField()
+        }
+        .padding()
     }
 }

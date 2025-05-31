@@ -41,17 +41,16 @@ struct OnboardingView: View {
                 .animation(.easeInOut, value: step)
                 
                 // Button-Leiste ------------------------------------------------------
-                HStack {
+                HStack(spacing: 12) {
                     if step != .body {
                         Button("Zurück") { withAnimation { prev() } }
-                            .foregroundColor(Color("AccentDark"))
+                            .buttonStyle(LinkButtonStyle())
                     }
-                    Spacer()
+                    
                     Button(step == .summary ? "Plan generieren" : "Weiter") {
                         Task { await nextOrSubmit() }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color("PrimaryGreen"))
+                    .buttonStyle(PrimaryButtonStyle())
                     .disabled(!vm.isStepValid(step))
                 }
                 .padding(.horizontal)
