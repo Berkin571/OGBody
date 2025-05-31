@@ -19,7 +19,7 @@ final class PlanStore: ObservableObject {
         plans.insert(new, at: 0)
         save()
         
-        // 🆕  Trainings-Tage parsen & in Firestore speichern
+        // Trainings-Tage parsen & in Firestore speichern
         let days = PlanParser.trainingDays(from: text)
         Task { try? await WorkoutRepository.shared.save(days) }
     }
