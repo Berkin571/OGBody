@@ -2,207 +2,187 @@
 //  PlanView.swift
 //  OGBody
 //
-//  Created by You on 12.05.25.
-//
 
 import SwiftUI
 
-/// Ernährungs-Sektion mit Mahlzeiten
+// MARK: – Helper-Model für die Food-Sektion
 struct MealSection: Identifiable {
     let id = UUID()
-    let name: String
+    var name: String
     var items: [String]
 }
 
 struct PlanView: View {
+    // Roh-Text aus der KI
     let fullPlan: String
-
+    
     @State private var trainingDays: [TrainingDay] = []
-    @State private var meals: [MealSection] = []
-
-    @State private var isEditing = false
-    @State private var draftPlan: String
-
-    @Environment(\.presentationMode) private var presentationMode
-
+    @State private var meals:        [MealSection] = []
+    @State private var isEditing     = false
+    @State private var draftPlan:    String
+    
+    @Environment(\.presentationMode) private var presentation
+    
+    // --------------------------------------------------------------
     init(fullPlan: String) {
-        self.fullPlan = fullPlan
-        _draftPlan = State(initialValue: fullPlan)
+        self.fullPlan  = fullPlan
+        _draftPlan     = State(initialValue: fullPlan)
     }
-
+    
+    // --------------------------------------------------------------
     var body: some View {
         ZStack {
             Color.white.ignoresSafeArea()
-
-            ScrollView {
-                VStack(spacing: 24) {
-                    if isEditing {
-                        TextEditor(text: $draftPlan)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(8)
-                            .shadow(radius: 4)
-                            .frame(minHeight: 300)
-                            .onChange(of: draftPlan) { _ in parsePlan() }
-
-                    } else {
-                        VStack(alignment: .leading, spacing: 32) {
-                            // MARK: Trainingsplan
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("🏋️ Trainingsplan")
-                                    .font(.title2).bold()
-                                    .foregroundColor(Color("AccentDark"))
-
-                                ForEach(trainingDays) { day in
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        // name ist bereits ohne Sterne
-                                        Text(day.name)
-                                            .font(.headline)
-                                            .foregroundColor(Color("PrimaryGreen"))
-                                        // items sind ebenfalls ohne Sterne
-                                        ForEach(day.items, id: \.self) { item in
-                                            Text("• \(item)")
-                                                .foregroundColor(.primary)
-                                        }
-                                    }
-                                }
-                            }
-
-                            // MARK: Ernährungsplan
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("🥗 Ernährungsplan")
-                                    .font(.title2).bold()
-                                    .foregroundColor(Color("AccentDark"))
-
-                                ForEach(meals) { meal in
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text(meal.name)
-                                            .font(.headline)
-                                            .foregroundColor(Color("PrimaryGreen"))
-                                        ForEach(meal.items, id: \.self) { item in
-                                            Text("• \(item)")
-                                                .foregroundColor(.primary)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(16)
-                        .shadow(radius: 4)
-                    }
-
-                    // MARK: Buttons
-                    HStack {
-                        Button(isEditing ? "Fertig" : "Bearbeiten") {
-                            withAnimation {
-                                if isEditing {
-                                    // Wenn ich aus dem Edit-Modus rausgehe: parsePlan aufrufen
-                                    parsePlan()
-                                } else {
-                                    // Wenn ich in den Edit-Modus gehe: Sterne aus draftPlan entfernen
-                                    draftPlan = draftPlan.removingStars()
-                                }
-                                isEditing.toggle()
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color("PrimaryGreen").opacity(0.2))
-                        .foregroundColor(Color("PrimaryGreen"))
-                        .cornerRadius(8)
-
-                        Spacer()
-
-                        if !isEditing {
-                            Button {
-                                PlanStore.shared.add(draftPlan)
-                                presentationMode.wrappedValue.dismiss()
-                            } label: {
-                                Label("Speichern", systemImage: "bookmark.fill")
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color("PrimaryGreen"))
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
-                            }
-                        }
-                    }
-                }
-                .padding()
-            }
+            ScrollView { content }.padding()
         }
         .navigationTitle("Dein Plan")
-        .onAppear { parsePlan() }
+        .onAppear { parseAll() }
     }
-
-    /// Parst den Rohtext in Trainings- und Ernährungs-Sektionen
-    private func parsePlan() {
-        trainingDays = []
-        meals = []
-
-        enum Section { case none, training, nutrition }
-        var currentSection: Section = .none
-
-        for raw in draftPlan.components(separatedBy: .newlines) {
-            let line = raw.trimmingCharacters(in: .whitespaces)
-            guard !line.isEmpty else { continue }
-
-            // Abschnittswechsel
-            if line.contains("Trainingsplan") {
-                currentSection = .training
-                continue
+    
+    // MARK: – Haupt-Content
+    @ViewBuilder
+    private var content: some View {
+        VStack(spacing: 24) {
+            if isEditing {
+                TextEditor(text: $draftPlan)
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(8)
+                    .shadow(radius: 4)
+                    .frame(minHeight: 300)
+                    .onChange(of: draftPlan) { _ in parseAll() }
+            } else {
+                displayMode
             }
-            if line.contains("Ernährungsplan") {
-                currentSection = .nutrition
-                continue
+            buttonBar
+        }
+    }
+    
+    // MARK: – Anzeige-Block
+    private var displayMode: some View {
+        VStack(alignment: .leading, spacing: 32) {
+            // ------- Trainingsplan -------
+            VStack(alignment: .leading, spacing: 16) {
+                Text("🏋️ Trainingsplan")
+                    .font(.title2).bold()
+                    .foregroundColor(Color("AccentDark"))
+                
+                ForEach(trainingDays) { day in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label {
+                            Text(day.name).font(.headline)
+                        } icon: {
+                            Image(systemName: day.category.icon)
+                        }
+                        .foregroundColor(Color("PrimaryGreen"))
+                        
+                        ForEach(day.items, id: \.self) { Text("• \($0)") }
+                    }
+                }
             }
-
-            switch currentSection {
-            case .training:
-                if line.hasPrefix("**") && line.hasSuffix("**") {
-                    // Neuer Tag
-                    let cleanName = line
-                        .trimmingCharacters(in: CharacterSet(charactersIn: "*"))
-                        .removingStars()
-                    trainingDays.append(TrainingDay(name: cleanName, items: []))
-                } else if let last = trainingDays.last,
-                          (line.hasPrefix("-") || line.range(of: #"^\d+\.\s"#, options: .regularExpression) != nil)
-                {
-                    // Liste an bestehender Sektion ergänzen
-                    var text = line
-                    if text.hasPrefix("-") { text = String(text.dropFirst()) }
-                    else if let r = text.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-                        text = String(text[r.upperBound...])
+            // ------- Ernährungsplan -------
+            VStack(alignment: .leading, spacing: 16) {
+                Text("🥗 Ernährungsplan")
+                    .font(.title2).bold()
+                    .foregroundColor(Color("AccentDark"))
+                
+                ForEach(meals) { meal in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(meal.name)
+                            .font(.headline)
+                            .foregroundColor(Color("PrimaryGreen"))
+                        ForEach(meal.items, id: \.self) { Text("• \($0)") }
                     }
-                    let itemClean = text.trimmingCharacters(in: .whitespaces)
-                        .removingStars()
-                    trainingDays[trainingDays.count - 1].items.append(itemClean)
                 }
-
-            case .nutrition:
-                if line.hasPrefix("**") && line.hasSuffix("**") {
-                    let cleanName = line
-                        .trimmingCharacters(in: CharacterSet(charactersIn: "*"))
-                        .removingStars()
-                    meals.append(MealSection(name: cleanName, items: []))
-                } else if let _ = meals.last,
-                          (line.hasPrefix("-") || line.range(of: #"^\d+\.\s"#, options: .regularExpression) != nil)
-                {
-                    var text = line
-                    if text.hasPrefix("-") { text = String(text.dropFirst()) }
-                    else if let r = text.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-                        text = String(text[r.upperBound...])
-                    }
-                    let itemClean = text.trimmingCharacters(in: .whitespaces)
-                        .removingStars()
-                    meals[meals.count - 1].items.append(itemClean)
-                }
-
-            case .none:
-                continue
             }
         }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(radius: 4)
+    }
+    
+    // MARK: – Button-Leiste
+    private var buttonBar: some View {
+        HStack {
+            Button(isEditing ? "Fertig" : "Bearbeiten") {
+                withAnimation {
+                    if isEditing { parseAll() }
+                    isEditing.toggle()
+                }
+            }
+            .buttonStyle(.bordered)
+            .tint(Color("PrimaryGreen").opacity(0.2))
+            
+            Spacer()
+            
+            if !isEditing {
+                Button {
+                    PlanStore.shared.add(draftPlan)
+                    presentation.wrappedValue.dismiss()
+                } label: {
+                    Label("Speichern", systemImage: "bookmark.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color("PrimaryGreen"))
+            }
+        }
+    }
+    
+    // MARK: – Parser (Train / Food sauber trennen)
+    private func parseAll() {
+        // 1) Ersten „Ernährungsplan“-Header suchen
+        guard let mealHeader = draftPlan.range(
+                of: "Ernährungsplan",
+                options: .caseInsensitive)
+        else {
+            // nur Training vorhanden
+            trainingDays = PlanParser.trainingDays(from: draftPlan)
+            meals = []
+            return
+        }
+        
+        // 2) Texte schneiden
+        let trainText = String(draftPlan[..<mealHeader.lowerBound])
+        let mealText  = String(draftPlan[mealHeader.upperBound...])
+        
+        // 3) Trainingstage via Helper
+        trainingDays = PlanParser.trainingDays(from: trainText)
+        
+        // 4) Mahlzeiten
+        meals = parseMeals(from: mealText)
+    }
+    
+    // MARK: – Food-Parser
+    private func parseMeals(from raw: String) -> [MealSection] {
+        var sections: [MealSection] = []
+        var current:  MealSection?
+        
+        for line in raw.components(separatedBy: .newlines) {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty else { continue }
+            
+            // Trainings-Header im Food-Block ignorieren
+            if t.localizedCaseInsensitiveContains("trainingsplan") { continue }
+            
+            if t.hasPrefix("**") && t.hasSuffix("**") {
+                if let m = current { sections.append(m) }
+                let name = t.trimmingCharacters(in: CharacterSet(charactersIn: "*"))
+                current  = MealSection(name: name, items: [])
+            } else if var m = current,
+                      t.hasPrefix("-") || t.range(of: #"^\d+\.\s"#,
+                                                  options: .regularExpression) != nil {
+                var txt = t
+                if txt.hasPrefix("-") { txt.removeFirst() }
+                else if let r = txt.range(of: #"^\d+\.\s"#,
+                                          options: .regularExpression) {
+                    txt = String(txt[r.upperBound...])
+                }
+                m.items.append(txt.trimmingCharacters(in: .whitespaces))
+                current = m
+            }
+        }
+        if let m = current { sections.append(m) }
+        return sections
     }
 }
